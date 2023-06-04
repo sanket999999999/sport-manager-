@@ -1,0 +1,130 @@
+<html>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <meta name="csrf-token" content="<%= csrfToken %>" />
+ <head>
+  <title>Sport Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  var token = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+        
+    function adduser(id) {
+        fetch(`/session/${id}/addParticipants`, {
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            _csrf: token,
+          }),
+        })
+          .then((res) => {
+            if (res.ok) {
+              window.location.reload();
+            }
+          })
+          .catch((err) => console.error(err));
+      }
+    function deletesession(id) {
+        fetch(`/session/${id}`, {
+          method: "delete",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            _csrf: token,
+          }),
+        })
+          .then((res) => {
+            if (res.ok) {
+              window.location.reload();
+            }
+          })
+          .catch((err) => console.error(err));
+      }
+  </script>
+</head>
+ <body class="bg-gradient-to-r from-purple-500 to-blue-500 flex justify-center items-center min-h-screen">
+  <div class="w-3/4">
+    <%- include('header.ejs') %>
+    <marquee class="text-white font-bold">Welcome to our Sport Management System</marquee>
+    <form action="/session" method="POST" id="sessionForm" class="flex flex-wrap gap-2 py-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="w-full md:w-1/2 lg:w-1/3">
+        <input name="venue" type="text" class="border border-gray-300 text-gray-900 text-sm rounded w-full p-2" placeholder="Venue" autofocus required>
+      </div>
+      <div class="w-full md:w-1/2 lg:w-1/3">
+        <input name="participants" type="text" class="border border-gray-300 text-gray-900 text-sm rounded w-full p-2" placeholder="Participants" autofocus required>
+      </div>
+      <div class="w-full md:w-1/2 lg:w-1/3">
+        <input name="playerneeded" type="number" class="border border-gray-300 text-gray-900 text-sm rounded w-full p-2" placeholder="Players Needed?" autofocus required>
+      </div>
+      <div class="w-full md:w-1/2 lg:w-1/3">
+        <input name="time" type="datetime-local" class="border border-gray-300 text-gray-900 text-sm rounded w-full p-2 leading-4">
+      </div>
+      <div class="w-full md:w-1/2 lg:w-1/3">
+        <button type="submit" class="text-white bg-green-600 hover:bg-green-700 font-medium rounded text-sm px-5 py-2 mr-2 mb-2">Add</button>
+      </div>      
+      <input type="hidden" name="sportId" value="<%= sportId %>">
+    </form>
+    <script src="/js/script.js"></script>
+    <div>
+      <h5 class="text-2xl">Created by you</h5>  
+      <table class="min-w-full border border-gray-300">
+        <thead>
+          <tr>
+            <th class="px-4 py-2 bg-gray-100">Venue</th>
+            <th class="px-4 py-2 bg-gray-100">Participants</th>
+            <th class="px-4 py-2 bg-gray-100">Player Needed</th>
+            <th class="px-4 py-2 bg-gray-100">Date & Time</th>
+            <th class="px-4 py-2 bg-gray-100"></th>
+            <th class="px-4 py-2 bg-gray-100"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% ownsessions.forEach(function(ownsessions) { %>
+            <tr>
+              <td class="px-4 py-2"><%= ownsessions.venue %></td>
+              <td class="px-4 py-2"><%= ownsessions.participants %></td>
+              <td class="px-4 py-2"><%= ownsessions.playerNeeded %></td>
+              <td class="px-4 py-2"><%= ownsessions.time %></td>
+              <td class="px-4 py-2"><button class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded" onclick="adduser(<%= ownsessions.id %>)">Join</button></td>
+              <td class="px-4 py-2"><button class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded" onclick="deletesession(<%= ownsessions.id %>)">Delete</button></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      <h5 class="text-2xl">Created by everybody</h5>  
+      <table class="min-w-full border border-gray-300">
+        <thead>
+          <tr>
+            <th class="px-4 py-2 bg-gray-100">Venue</th>
+            <th class="px-4 py-2 bg-gray-100">Participants</th>
+            <th class="px-4 py-2 bg-gray-100">Player Needed</th>
+            <th class="px-4 py-2 bg-gray-100">Date & Time</th>
+            <th class="px-4 py-2 bg-gray-100"></th>
+            <th class="px-4 py-2 bg-gray-100"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% sessions.forEach(function(session) { %>
+            <tr>
+              <td class="px-4 py-2"><%= session.venue %></td>
+              <td class="px-4 py-2"><%= session.participants %></td>
+              <td class="px-4 py-2"><%= session.playerNeeded %></td>
+              <td class="px-4 py-2"><%= session.time %></td>
+              <td class="px-4 py-2"><button class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded" onclick="adduser(<%= session.id %>)">Join</button></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      <div class="py-2">
+    <% if(messages && messages.error && messages.error.length>0){ %>
+        <% for(var i=0; i<messages.error.length; i++) { %>
+            <li class=" py-2 px-2 border bg-red-200 rounded"> 
+                <%= messages.error[i] %>
+            </li>
+        <% } %>
+    <% }%>
+</div>
+    </div>
+  </div>
+</body>
+</html>

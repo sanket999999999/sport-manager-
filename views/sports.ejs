@@ -1,0 +1,54 @@
+<!-- index.ejs -->
+
+<!DOCTYPE html>
+<html class="h-full">
+<meta name="csrf-token" content="<%= csrfToken %>" />
+<head>
+    <title>Sports Table</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-blue-500">
+    <h1 class="text-3xl font-bold mb-8 text-white">Sports Table</h1>
+    <marquee>hi <%= user %> welcome to sport management system</marquee>
+    <h1>you login as <%= role %></h1>
+    <div class="flex-none underline">
+        <a class="underline-offset-2" href="/signout" method="delete">Signout</a>
+      </div>
+    <% if (role === "admin") { %>
+    <form method="POST" action="/sport" class="flex mb-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="text" name="name" placeholder="Type a new sport" class="py-2 px-4 border border-gray-300 rounded-l">
+        <button type="submit" class="py-2 px-6 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded">Add Sport</button>
+    </form>
+    <% } %>
+    <table class="border-collapse border border-gray-300">
+        <tr>
+            <th class="py-2 px-4 border-b text-white">Sport Name</th>
+        </tr>
+        <% if (sports && sports.length > 0) { %>
+            <% sports.forEach(function(sport) { %>
+                <tr>
+                    <td class="py-2 px-4">
+                        <a href="/sportsession/<%= sport.id %>" class="text-pink-600 hover:text-pink-700"><%= sport.sportname %></a>
+                    </td>
+                </tr>
+            <% }); %>
+        <% } else { %>
+            <tr>
+                <td colspan="1" class="py-2 px-4">No sports found</td>
+            </tr>
+        <% } %>
+    </table>
+    <div class="py-2">
+    <% if(messages && messages.error && messages.error.length>0){ %>
+        <% for(var i=0; i<messages.error.length; i++) { %>
+            <li class=" py-2 px-2 border bg-red-200 rounded"> 
+                <%= messages.error[i] %>
+            </li>
+        <%} %>
+    <%}%>
+</div>
+</body>
+
+</html>
