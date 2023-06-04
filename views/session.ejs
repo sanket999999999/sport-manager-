@@ -44,6 +44,7 @@
  <body class="bg-gradient-to-r from-purple-500 to-blue-500 flex justify-center items-center min-h-screen">
   <div class="w-3/4">
     <%- include('header.ejs') %>
+    <h1 class="text-3xl font-bold mb-8 text-white">session Table</h1>
     <marquee class="text-white font-bold">Welcome to our Sport Management System</marquee>
     <form action="/session" method="POST" id="sessionForm" class="flex flex-wrap gap-2 py-4">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
