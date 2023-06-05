@@ -12,7 +12,7 @@
   "author": "sanket jambhulkar",
   "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
+    "bcrypt": "^5.1.0",
     "cheerio": "^1.0.0-rc.12",
     "connect-ensure-login": "^0.1.1",
     "connect-flash": "^0.1.1",
