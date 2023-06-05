@@ -1,4 +1,3 @@
-
 const express = require("express");
 const app = express();
 const { User, Sport, Session } = require("./models");
