@@ -87,7 +87,7 @@ app.use(function (request, response, next) {
 
 app.get("/", async (request, response) => {
   if (request.user) {
-    return response.redirect("/sports");
+    return response.redirect("/sport");
   } else {
     response.render("index", {
       title: "Sports Scheduler",
