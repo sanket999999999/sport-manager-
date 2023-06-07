@@ -115,7 +115,7 @@ describe("Create session", () => {
     const response = await agent.post("/session/1/addParticipants").send({
       _csrf: csrfToken,
     });
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(302);
   });
   
   test("deleting a session", async () => {
