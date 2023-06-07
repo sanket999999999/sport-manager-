@@ -195,6 +195,14 @@ app.get("/sport", connectEnsureLogin.ensureLoggedIn() , async (request, response
 app.post("/sport", async (request,response)=>{
   try{
     const sportname = request.body.name;
+    const alreadysport = await Sport.findOne({
+      where: { sportname: sportname }
+    });
+    console.log("alreadysport:", alreadysport);
+    if (alreadysport) {
+      request.flash("error", "Sport already registered. Please try use a different sport.");
+      return response.redirect("/sport");
+    }
     const sport = await Sport.create({sportname});
     return response.redirect("/sport")
   }
