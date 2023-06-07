@@ -315,39 +315,42 @@ app.put('/session/:id', async function (request, response) {
 app.post('/session/:id/addParticipants', async function (request, response) {
   try {
     const { id } = request.params;
-    const participants = "sanket"; // Assuming "sanket" is a valid participant value
     const additional = request.user.firstName;
 
     const session = await Session.findByPk(id);
-    console.log("session==========",session)
-    console.log("playerNeeded==========",session.dataValues.playerNeeded)
-    var limit = session.dataValues.playerNeeded
     if (!session) {
       return response.status(404).json({ message: 'Session not found' });
     }
-    if (limit > 0) {
-  if (session.participants.includes(additional)) {
-    console.log("hi, we are inside of if statement of session.participants.includes(additional)")
-    request.flash("error", "you already entered !!");
-    return response.redirect("/sportsession/"+session.dataValues.sportId);
-  }else{
-    session.participants = session.participants.concat(additional);
-    limit = limit - 1;
-  }
-}
 
-    try {
-      await session.save();
-      return response.json({ message: 'Participants added successfully' });
-    } catch (error) {
-      console.log(error);
-      return response.status(500).json({ message: 'Error saving session' });
+    const participants = session.participants || []; // Retrieve existing participants or initialize as an empty array
+    const limit = session.dataValues.playerNeeded;
+
+    if (limit > 0) {
+      if (participants.includes(additional)) {
+        request.flash("error", "You have already joined this session.");
+        return response.redirect("/sportsession/" + session.dataValues.sportId);
+      } else {
+        session.participants = session.participants.concat(additional); // Add the new participant to the array
+        session.playerNeeded = limit - 1; // Decrement the playerNeeded value
+
+        try {
+          await session.save();
+          return response.redirect("/sportsession/" + session.dataValues.sportId);
+        } catch (error) {
+          console.log(error);
+          return response.status(422).json(error);
+        }
+      }
+    } else {
+      request.flash("error", "This session is already full.");
+      return response.redirect("/sportsession/" + session.dataValues.sportId);
     }
   } catch (error) {
     console.log(error);
     return response.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 app.put('/session/:id/removeParticipants', async function (request, response) {
   try {
