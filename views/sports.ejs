@@ -1,54 +1,126 @@
-<!-- index.ejs -->
-
-<!DOCTYPE html>
 <html class="h-full">
-<meta name="csrf-token" content="<%= csrfToken %>" />
+  <meta name="csrf-token" content="<%= csrfToken %>" />
 <head>
     <title>Sports Table</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.all.min.js"></script>
+
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-
+<script>
+  var token = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+        
+    function deleteuser(id) {
+        fetch(`/session/${id}/removeParticipants`, {
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            _csrf: token,
+          }),
+        })
+          .then((res) => {
+            if (res.ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'disjointed successfully ',
+      }).then(() => {
+        window.location.reload();
+      });
+            }
+          })
+          .catch((err) => {
+           console.log("==============================================")
+  console.log(err);
+  console.log("==============================================")
+  Swal.fire({
+    icon: 'error',
+    title: 'Oops...',
+    text: 'error for disjoining session',
+  }).then(() => {
+    console.log("text ========= ",err.message)
+    window.location.reload();
+  }); 
+          });
+          
+    }
+    
+  </script>
 <body class="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-blue-500">
-    <h1 class="text-3xl font-bold mb-8 text-white">Sports Table</h1>
-    <marquee>hi <%= user %> welcome to sport management system</marquee>
-    <h1>you login as <%= role %></h1>
-    <div class="flex-none underline">
-        <a class="underline-offset-2" href="/signout" method="delete">Signout</a>
-      </div>
-    <% if (role === "admin") { %>
-    <form method="POST" action="/sport" class="flex mb-4">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <input type="text" name="name" placeholder="Type a new sport" class="py-2 px-4 border border-gray-300 rounded-l" required >
-        <button type="submit" class="py-2 px-6 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded">Add Sport</button>
-    </form>
-    <% } %>
-    <table class="border-collapse border border-gray-300">
-        <tr>
-            <th class="py-2 px-4 border-b text-white">Sport Name</th>
-        </tr>
-        <% if (sports && sports.length > 0) { %>
-            <% sports.forEach(function(sport) { %>
-                <tr>
-                    <td class="py-2 px-4">
-                        <a href="/sportsession/<%= sport.id %>" class="text-pink-600 hover:text-pink-700"><%= sport.sportname %></a>
-                    </td>
-                </tr>
-            <% }); %>
-        <% } else { %>
-            <tr>
-                <td colspan="1" class="py-2 px-4">No sports found</td>
-            </tr>
+    <div class="container mx-auto">
+        <h1 class="text-4xl font-bold mb-8 text-white">Sports Table</h1>
+        <marquee class="text-2xl font-bold mb-6 text-white">Hi <%= user %>! Welcome to the Sport Management System</marquee>
+        <% if (role === "admin") { %>
+        <a href="/reports" class="text-white font-bold underline right-16 "> see reports </a>
         <% } %>
-    </table>
-    <div class="py-2">
-    <% if(messages && messages.error && messages.error.length>0){ %>
-        <% for(var i=0; i<messages.error.length; i++) { %>
-            <li class=" py-2 px-2 border bg-red-200 rounded"> 
-                <%= messages.error[i] %>
-            </li>
-        <%} %>
-    <%}%>
-</div>
+        <h1 class="text-2xl font-bold mb-6 text-white">You are logged in as <%= role %></h1>
+        <div class="underline">
+            <a class="underline-offset-2" href="/signout" method="get">Signout</a>
+        </div>
+        <br>
+        <div class="table-container"> 
+        <h6 class="text-3xl font-bold mb-8 text-white">Your joined sessions </h6>
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2 bg-gray-100">Venue</th>
+                        <th class="px-4 py-2 bg-gray-100">Participants</th>
+                        <th class="px-4 py-2 bg-gray-100">Player Needed</th>
+                        <th class="px-4 py-2 bg-gray-100">Date & Time</th>
+                        <th class="px-4 py-2 bg-gray-100"></th>
+                        <th class="px-4 py-2 bg-gray-100"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% participate.forEach(function(participate) { %>
+                        <tr>
+                            <td class="px-4 py-2"><%= participate.venue %></td>
+                            <td class="px-4 py-2"><%= participate.participants %></td>
+                            <td class="px-4 py-2"><%= participate.playerNeeded %></td>
+                            <td class="px-4 py-2"><%= participate.time %></td>
+                     <td class="px-4 py-2"><button class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded" onclick="deleteuser(<%= participate.id %>)">UnJoin</button></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <br>
+        <% if (role === "admin") { %>
+            <form method="POST" action="/sport" class="flex mb-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="text" name="name" placeholder="Type a new sport" class="py-2 px-4 border border-gray-300 rounded-l" required>
+                <button type="submit" class="py-2 px-6 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-r">Add Sport</button>
+            </form>
+        <% } %>
+        <br>
+           <table class="border-collapse border border-gray-300"> 
+         <tr> 
+             <th class="py-2 px-4 border-b text-white">Available Sport </th> 
+         </tr> 
+         <% if (sports && sports.length > 0) { %> 
+             <% sports.forEach(function(sport) { %> 
+                 <tr> 
+                     <td class="py-2 px-4"> 
+                         <a href="/sportsession/<%= sport.id %>" class="text-pink-600 hover:text-pink-700"><%= sport.sportname %></a> 
+                     </td> 
+                 </tr> 
+             <% }); %> 
+         <% } else { %> 
+             <tr> 
+                 <td colspan="1" class="py-2 px-4">No sports found</td> 
+             </tr> 
+         <% } %> 
+     </table>
+        <% if(messages && messages.error && messages.error.length>0){ %>
+            <div class="py-2">
+                <% for(var i=0; i<messages.error.length; i++) { %>
+                    <p class="py-2 px-2 border bg-red-200 rounded"><%= messages.error[i] %></p>
+                <%} %>
+            </div>
+        <%}%>
+    </div>
 </body>
 
 </html>
