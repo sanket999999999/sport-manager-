@@ -9,8 +9,11 @@ const passport = require("passport");
 const connectEnsureLogin = require("connect-ensure-login");
 const session = require("express-session");
 const LocalStrategy = require("passport-local");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const flash = require("connect-flash");
+const Swal = require('sweetalert2');
+
+const { Op } = require("sequelize");
 
 const saltRounds = 10;
 
@@ -182,10 +185,18 @@ app.get("/sport", connectEnsureLogin.ensureLoggedIn() , async (request, response
   try {
     const sports = await Sport.findAll();
     const user = request.user.firstName
+    const participate = await Session.findAll({
+  where: {
+    participants: {
+      [Op.contains]: [user]
+    }
+  }
+})
     const role = request.user.role
     console.log("firstName========",user)
     console.log("role====",role)
-    response.render("sports", { sports,user,role, csrfToken: request.csrfToken()}); // Pass sessions data to the template
+    console.log("participate ==========",participate)
+    response.render("sports", { participate,sports,user,role, csrfToken: request.csrfToken()}); // Pass sessions data to the template
   } catch (error) {
     console.log(error);
     response.status(500).json({ message: 'Internal Server Error' });
@@ -224,16 +235,25 @@ app.get("/signout", function (request, response, next) {
   });
 });
 
-app.get("/sportsession/:id",connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
+app.get("/sportsession/:id", connectEnsureLogin.ensureLoggedIn(), async (request, response) => {
   try {
     const sportId = request.params.id;
     const userId = request.user.id;
+    const user = request.user.firstName;
     console.log(sportId);
-    const sessions = await Session.findAll({ where: { sportId } });
-    const ownsessions = await Session.findAll({ where: { sportId,userId } });
-    console.log("sessions============",sessions)
-    console.log("ownsessions============",ownsessions)
-    response.render("session", { sessions,sportId,ownsessions, csrfToken: request.csrfToken() }); // Pass sessions data to the template
+    console.log("user =============", user);
+    
+    const sessions = await Session.findAll({
+      where: {
+        sportId
+      }
+    });
+    
+    const ownsessions = await Session.findAll({ where: { sportId, userId } });
+    console.log("sessions============", sessions);
+    console.log("ownsessions============", ownsessions);
+    
+    response.render("session", { sessions, sportId, ownsessions, csrfToken: request.csrfToken() }); // Pass sessions data to the template
   } catch (error) {
     console.log(error);
     response.status(500).json({ message: 'Internal Server Error' });
@@ -320,10 +340,19 @@ app.put('/session/:id', async function (request, response) {
     return response.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 app.post('/session/:id/addParticipants', async function (request, response) {
   try {
     const { id } = request.params;
     const additional = request.user.firstName;
+
+    // Get the current date and time
+    var now = new Date();
+
+    // Convert to the desired format
+    var formattedDate = now.toISOString();
+
+    console.log(formattedDate); // Output: 2023-07-11T19:07:00.000Z
 
     const session = await Session.findByPk(id);
     if (!session) {
@@ -332,26 +361,33 @@ app.post('/session/:id/addParticipants', async function (request, response) {
 
     const participants = session.participants || []; // Retrieve existing participants or initialize as an empty array
     const limit = session.dataValues.playerNeeded;
+    const expire = new Date(session.dataValues.time); // Convert expire to a Date object
+    console.log("time ==========", expire);
+    console.log("now time ==========", formattedDate);
 
-    if (limit > 0) {
-      if (participants.includes(additional)) {
-        request.flash("error", "You have already joined this session.");
-        return response.redirect("/sportsession/" + session.dataValues.sportId);
-      } else {
-        session.participants = session.participants.concat(additional); // Add the new participant to the array
-        session.playerNeeded = limit - 1; // Decrement the playerNeeded value
+    if (new Date(formattedDate) < expire) { // Convert formattedDate to a Date object for comparison
+      console.log("date is validated");
+      if (limit > 0) {
+        if (participants.includes(additional)) {
+          return response.status(400).json({ message: 'You have already joined this session.' });
+        } else {
+          session.participants = session.participants.concat(additional); // Add the new participant to the array
+          session.playerNeeded = limit - 1; // Decrement the playerNeeded value
 
-        try {
-          await session.save();
-          return response.redirect("/sportsession/" + session.dataValues.sportId);
-        } catch (error) {
-          console.log(error);
-          return response.status(422).json(error);
+          try {
+            await session.save();
+            console.log("======successfully added the user======");
+            return response.status(200).json({ message: 'Participant added successfully.' });
+          } catch (error) {
+            console.log(error);
+            return response.status(422).json({ message: 'Error saving session.' });
+          }
         }
+      } else {
+        return response.status(400).json({ message: 'This session is already full.' });
       }
     } else {
-      request.flash("error", "This session is already full.");
-      return response.redirect("/sportsession/" + session.dataValues.sportId);
+      return response.status(400).json({ message: 'This session is already expired .' });
     }
   } catch (error) {
     console.log(error);
@@ -359,30 +395,29 @@ app.post('/session/:id/addParticipants', async function (request, response) {
   }
 });
 
-
-app.put('/session/:id/removeParticipants', async function (request, response) {
+app.post('/session/:id/removeParticipants', async function (request, response) {
   try {
     const { id } = request.params;
-    const participantTobeRemove = "sanket"; // Assuming "sanket" is the participant to be removed
-    const participantToRemove = request.user.firstName;
+    const participantToRemove = request.user.firstName; // Participant to be removed
     const session = await Session.findByPk(id);
     if (!session) {
       return response.status(404).json({ message: 'Session not found' });
     }
 
     const participants = session.participants;
-    const index = participants.indexOf(participantToRemove);
-
-    if (index === -1) {
+    const updatedParticipants = participants.filter(participant => participant !== participantToRemove);
+    
+    if (participants.length === updatedParticipants.length) {
       return response.status(400).json({ message: 'Participant not found in session' });
     }
 
-    participants.splice(index, 1);
-    session.participants = participants;
+    session.participants = updatedParticipants;
+    session.playerNeeded = session.playerNeeded + 1;
 
     try {
       await session.save();
       return response.json({ message: 'Participant removed successfully' });
+      // return response.redirect("/sport");
     } catch (error) {
       console.log(error);
       return response.status(500).json({ message: 'Error saving session' });
@@ -392,6 +427,33 @@ app.put('/session/:id/removeParticipants', async function (request, response) {
     return response.status(500).json({ message: 'Internal Server Error' });
   }
 });
+app.get('/reports',async function (request, response){
+  try{
+    var now = new Date();
+
+    // Convert to the desired format
+    var formattedDate = now.toISOString();
+
+    console.log(formattedDate); 
+    const session = await Session.findAll({
+      where: {
+        time: {
+            [Op.lt]: new Date(formattedDate),
+          }
+      }
+    });
+    console.log("hi here are the session reports=",session)
+    response.render("reports",{
+      session, 
+      csrfToken: request.csrfToken()
+    })
+  }
+  catch(error){
+    console.log(error)
+    return response.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 
 
 
