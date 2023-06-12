@@ -1,1 +1,44 @@
-
+<html> 
+   <link rel="stylesheet" href="/css/styles.css" /> 
+   <meta name="csrf-token" content="<%= csrfToken %>" /> 
+  <head> 
+   <title>Sport Manager</title> 
+   <script src="https://cdn.tailwindcss.com"></script> 
+ </head> 
+  <body class="bg-gradient-to-r from-purple-500 to-blue-500 flex justify-center items-center min-h-screen"> 
+   <div class="w-3/4"> 
+     <%- include('header.ejs') %> 
+     <h1 class="text-3xl font-bold mb-8 text-white">past sessions Table</h1> 
+     <marquee class="text-white font-bold">Welcome to our Sport Management System</marquee> 
+     <a href="/sport" class="text-white font-bold underline right-16 "> back to sport </a>
+     <script src="/js/script.js"></script> 
+     <div> 
+       <h5 class="text-2xl">Past Sessions </h5>  
+       <table class="min-w-full border border-gray-300"> 
+         <thead> 
+           <tr> 
+             <th class="px-4 py-2 bg-gray-100">Venue</th> 
+             <th class="px-4 py-2 bg-gray-100">Participants</th> 
+             <th class="px-4 py-2 bg-gray-100">Player Needed</th> 
+             <th class="px-4 py-2 bg-gray-100">Date & Time</th> 
+             <th class="px-4 py-2 bg-gray-100">sportId</th> 
+             <th class="px-4 py-2 bg-gray-100">created by Id</th> 
+           </tr> 
+         </thead> 
+         <tbody> 
+           <% session.forEach(function(session) { %> 
+             <tr> 
+               <td class="px-4 py-2"><%= session.venue %></td> 
+               <td class="px-4 py-2"><%= session.participants %></td> 
+               <td class="px-4 py-2"><%= session.playerNeeded %></td> 
+               <td class="px-4 py-2"><%= session.time %></td> 
+               <td class="px-4 py-2"><%= session.sportId %></td>
+               <td class="px-4 py-2"><%= session.userId %></td>
+             </tr> 
+           <% }); %> 
+         </tbody> 
+       </table> 
+     </div> 
+   </div> 
+ </body> 
+ </html>
