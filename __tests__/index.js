@@ -107,7 +107,22 @@ describe("Create session", () => {
     expect(response.statusCode).toBe(302);
   });
   
-  test("join user to a sport's session", async () => {
+  test("Creating a fresh sport session", async () => {
+    const agent = request.agent(server);
+    await login(agent, "user.a@test.com", "12345678");
+    const res = await agent.get("/sportsession/2");
+    const csrfToken = extractCsrfToken(res);
+    const response = await agent.post("/session").send({
+      venue: "Mumbai",
+      playerneeded: 4,
+      participants: "hari,gopal,sham,shri",
+      time: "2023-12-12 00:41:00+05:30",
+      _csrf: csrfToken,
+    });
+    expect(response.statusCode).toBe(302);
+  });
+  
+  test("user cant able to join a expired sport's session", async () => {
     const agent = request.agent(server);
     await login(agent, "user.a@test.com", "12345678");
     const res = await agent.get("/sportsession/1");
@@ -115,7 +130,18 @@ describe("Create session", () => {
     const response = await agent.post("/session/1/addParticipants").send({
       _csrf: csrfToken,
     });
-    expect(response.statusCode).toBe(302);
+    expect(response.statusCode).toBe(400);
+  });
+  
+  test("user can able to join a non expired sport's session", async () => {
+    const agent = request.agent(server);
+    await login(agent, "user.a@test.com", "12345678");
+    const res = await agent.get("/sportsession/2");
+    const csrfToken = extractCsrfToken(res);
+    const response = await agent.post("/session/2/addParticipants").send({
+      _csrf: csrfToken,
+    });
+    expect(response.statusCode).toBe(200);
   });
   
   test("deleting a session", async () => {
